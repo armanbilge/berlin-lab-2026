@@ -1,0 +1,31 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: ['**']
+  push:
+    branches: ['main']
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: coursier/cache-action@v6
+      - uses: VirtusLab/scala-cli-setup@main
+      - run: scala-cli fmt --check src/
+      - run: scala-cli --power package src/
+      - if: github.event_name != 'pull_request'
+        run: |
+          mkdir deploy
+          cp index.html LabApp.js deploy
+      - if: github.event_name != 'pull_request'
+        uses: peaceiris/actions-gh-pages@v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy
